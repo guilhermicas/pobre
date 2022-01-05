@@ -196,7 +196,6 @@ def skipVideoAd(driver, video_element):
 
     if(video_element.get_attribute("currentTime") == video_duration):
         print("Ad skipped successfully")
-        return True
     else:
         print("Unable to skip ad, raising exception for now, maybe later retry the whole algorithm idk")
         raise Exception
@@ -213,7 +212,7 @@ def getLoadedVideoStreamUrl(driver, video_xpath):
         video_src = video_element.get_attribute("src")
 
     # Problably ad
-    if(r"video" in video_src or r"/src/" in video_src or r"BT.mp4" in video_src):
+    if("pobre.tv" in video_src or "BT.mp4" in video_src):
         print("Ad found")
         skipVideoAd(driver, video_element)
 
