@@ -277,7 +277,7 @@ def get_episode_stream_url(episode_url):
     if platform == "win32":
         # If on windows
         driver = webdriver.Firefox(
-            options=firefox_options, firefox_profile=firefox_profile, executable_path=pathlib.Path(__file__).parent.resolve()+r"\gecko_driver\geckodriver.exe")
+            options=firefox_options, firefox_profile=firefox_profile, executable_path=str(Path(pathlib.Path(__file__).parent.resolve()))+r"\gecko_driver\geckodriver.exe")
     else:
         # If on linux
         driver = webdriver.Firefox(

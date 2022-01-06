@@ -1,4 +1,3 @@
-import vlc
 from sys import platform
 from os import system
 
@@ -85,4 +84,8 @@ def execute_OS_command(linux_command: str, windows_command: str, args: list = []
 
     # If there are args, they will be added, if not, args will become empty string
     args = " ".join(args)
-    system(f"{exe_command} {args}")
+
+    exe_command = exe_command + " " + args
+    print("Executing VLC")
+
+    system(exe_command)
