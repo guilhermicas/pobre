@@ -72,7 +72,7 @@ def main():
         print(f"Stream url: {stream_url}")
         # Play VLC stream, os.system stops program execution until VLC closes.
         execute_OS_command(
-            "vlc", r"C:\Program\ Files\VideoLAN\VLC\vlc.exe", [stream_url])
+            "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url])
         #os.system(f"vlc {stream_url}")
         #print("Pseudo menu")
         #print("[p] proximo episodio")
