@@ -4,12 +4,29 @@ from bs4 import BeautifulSoup
 from time import sleep
 import requests
 
+from sys import platform
+import pathlib
+
 
 """
 [start] Menu selection scrapping (no selenium)
 
 This is scraping used to select Series, then season, then episode.
 """
+
+
+def safeGETrequest(query: str):
+    """
+        A GET request that returns True if successfull (200+) or False if not
+    """
+    request = requests.get(query)
+
+    if(request.status_code >= 200 and request.status_code <= 299):
+        return request.content
+    else:
+        print(
+            f"Pobre.tv está down provavelmente. Status code = {request.status_code}")
+        raise Exception
 
 
 def scrapSeries(query: str):
@@ -22,7 +39,8 @@ def scrapSeries(query: str):
             ["Sherlock3", "2010", "Comedy, Drama", "https://pobre.tv/tvshows/tt1475582"]
         ])
     """
-    html_doc = requests.get(query).content
+    html_doc = safeGETrequest(query)
+
     soup = BeautifulSoup(html_doc, "html.parser")
 
     # Obtaining from html markup the search result's titles and years
@@ -52,7 +70,8 @@ def scrapSeasons(series_chosen: str):
     series_url = series_chosen[3]
 
     # Obtaining from html the available seasons
-    html_doc = requests.get(series_url).content
+    html_doc = safeGETrequest(series_url)
+
     soup = BeautifulSoup(html_doc, "html.parser")
 
     seasons_available = soup.find(id="seasonsList").text.split(" ")
@@ -77,7 +96,8 @@ def scrapEpisodes(season_chosen_url: str):
     """
 
     # Obtaining from html the available seasons
-    html_doc = requests.get(season_chosen_url).content
+    html_doc = safeGETrequest(season_chosen_url)
+
     soup = BeautifulSoup(html_doc, "html.parser")
 
     episodes_links = soup.find(
@@ -219,11 +239,11 @@ def getLoadedVideoStreamUrl(driver, video_xpath):
         # If video duration becomes NaN, it means that the actual series video as loaded but hasnt been started (no need to start it, just need to
         #                                                                                                       detect when its loaded to extract
         #                                                                                                       src.
-        while(video.get_attribute("duration") != "NaN"):
+        while(video_element.get_attribute("duration") != "NaN"):
             sleep(0.3)
 
         #print("Video src:")
-        video_src = video.get_attribute("src")
+        video_src = video_element.get_attribute("src")
 
     else:
         print("No ad found")
@@ -237,17 +257,46 @@ def get_episode_stream_url(episode_url):
     firefox_options.add_argument("--headless")
 
     firefox_profile = webdriver.FirefoxProfile()
+
     # Disable image loading
     firefox_profile.set_preference("permissions.default.image", 2)
-    # Disable CSS loading
-    firefox_profile.set_preference('permissions.default.stylesheet', 2)
+
+    # Options that should help
+    firefox_profile.set_preference(
+        "browser.helperApps.deleteTempFileOnExit", True)
+    firefox_profile.set_preference("reader.parse-on-load.enabled", False)
+    firefox_profile.set_preference(
+        "browser.display.show_image_placeholders", False)
+    firefox_profile.set_preference(
+        "browser.display.use_document_colors", False)
+    firefox_profile.set_preference("browser.display.use_document_fonts", 0)
+
+    # TODO: Disable CSS
 
     # Driver is basically browser controller
-    driver = webdriver.Firefox(
-        options=firefox_options, firefox_profile=firefox_profile)
+    if platform == "win32":
+        # If on windows
+        driver = webdriver.Firefox(
+            options=firefox_options, firefox_profile=firefox_profile, executable_path=pathlib.Path(__file__).parent.resolve()+r"\gecko_driver\geckodriver.exe")
+    else:
+        # If on linux
+        driver = webdriver.Firefox(
+            options=firefox_options, firefox_profile=firefox_profile)
 
     try:
         driver.get(episode_url)
+
+        # Only continue if request was successfull
+        for request in driver.requests:
+            if request.response:
+                status_code = request.response.status_code
+                if request.url == episode_url:
+                    if status_code < 200 or status_code >= 300:
+                        print(
+                            "O site provavelmente não está ativo. Tente novamente mais tarde ou contacte desenvolvedor.")
+                        return False
+                    else:
+                        break
 
         clickPrePlayButton(
             driver, "//div[contains(@class,'prePlaybutton')]")
@@ -274,3 +323,4 @@ def get_episode_stream_url(episode_url):
 
         # If driver is still opened, close all tabs correctly, this prevents redundant disk space allocation not being cleared
         driver.quit()
+        return False

@@ -7,11 +7,12 @@ import os
 
 def main():
 
+    # TODO: Handle Exceptions correctly by creating custom exceptions
     # TODO: submodularize to support movies and anime from site
     # Search Series Loop
     while(True):
 
-        os.system("clear")
+        execute_OS_command("clear", "cls")
         # TODO: Reactivate user input and correct search_url formatting
         # Getting search input
         search_query = input("Série: ")
@@ -36,7 +37,7 @@ def main():
         # Search Seasons (use series name and metadata just for UX on the top of the search, visual purposes only, use link to do the webscraping)
         seasons_found = scrapSeasons(series_chosen)
 
-        os.system("clear")
+        execute_OS_command("clear", "cls")
         print(f"Série: {series_chosen[0]}")
         print("Temporadas encontradas:")
         # Choosing season from the chosen series
@@ -48,7 +49,7 @@ def main():
         # Search Season's available episodes
         episodes_found = scrapEpisodes(season_chosen_url)
 
-        os.system("clear")
+        execute_OS_command("clear", "cls")
         print(f"Série: {series_chosen[0]} Temporada {season_chosen}")
         print("Episódios encontrados:")
         # Choose Episode to watch
@@ -60,10 +61,23 @@ def main():
         # Link to extract the stream URL
         stream_extract_url = f"{season_chosen_url}/episode/{episode_id}"
 
-        print("Getting stream url...")
+        print("Getting stream url... (permitir até 1 minuto)")
         stream_url = get_episode_stream_url(stream_extract_url)
-        # TODO: For now starting vlc with os.system, in the future have proper vlc implementation and detect if closed to open menu
-        os.system(f"vlc {stream_url}")
+
+        # TODO:Migrate this to get_episode_stream_url and raise custom exception maybe
+        if not stream_url:
+            print("Não foi possivel buscar o URL da stream.")
+            exit(1)
+
+        print(f"Stream url: {stream_url}")
+        # Play VLC stream, os.system stops program execution until VLC closes.
+        execute_OS_command(
+            "vlc", r"C:\Program Files\VideoLAN\VLC\vlc.exe", [stream_url])
+        #os.system(f"vlc {stream_url}")
+        #print("Pseudo menu")
+        #print("[p] proximo episodio")
+        #print("[a] episodio anterior")
+        #print("[s] sair")
 
         # VLC stream
         # if VLC dies, show menu (see diagram)
