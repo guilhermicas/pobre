@@ -61,13 +61,15 @@ def main():
         # Link to extract the stream URL
         stream_extract_url = f"{season_chosen_url}/episode/{episode_id}"
 
-        print("Getting stream url... (permitir até 1 minuto)")
-        stream_url = get_episode_stream_url(stream_extract_url)
+        print("Getting stream url and subtitle url... (permitir até 1 minuto)")
+        stream_url, subtitle_url = get_episode_stream_url(stream_extract_url)
 
         # TODO:Migrate this to get_episode_stream_url and raise custom exception maybe
         if not stream_url:
             print("Não foi possivel buscar o URL da stream.")
             exit(1)
+
+        # TODO: Download subtitle to tmp file and delete after vlc dies
 
         print(f"Stream url: {stream_url}")
         # Play VLC stream, os.system stops program execution until VLC closes.

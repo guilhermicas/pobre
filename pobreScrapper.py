@@ -252,7 +252,31 @@ def getLoadedVideoStreamUrl(driver, video_xpath):
     return video_src
 
 
+def getSubtitles(driver):
+    print("Extracting subtitles...")
+    try:
+        # Find script tag that contains window.subtitle
+        subtitle_url = waitFindElement(
+            driver, "//script[@type]").get_attribute("innerHTML")
+
+        # Extracting line with subs
+        subtitle_url = subtitle_url.split("\n")[2]
+
+        # Getting link from between quotation marks
+        subtitle_url = subtitle_url[subtitle_url.find(
+            "'")+1:subtitle_url.rfind("'")]
+
+        return subtitle_url
+    except Exception as e:
+        print("No subtitles found...")
+        print("Exception message: " + str(e))
+        return None
+
+
 def get_episode_stream_url(episode_url):
+    """
+        Gets stream url and subtitle url if available
+    """
     firefox_options = webdriver.FirefoxOptions()
     # Dont visually open browser window
     firefox_options.add_argument("--headless")
@@ -310,12 +334,15 @@ def get_episode_stream_url(episode_url):
         # Change Iframe to be the "main html document", this enables searching and interacting with items inside it, including the video we want
         driver.switch_to.frame(iframe)
 
+        subtitle_url = getSubtitles(driver)
+        print(subtitle_url)
+
         print("Extracting stream url...")
         stream_url = getLoadedVideoStreamUrl(driver, "//video")
 
         driver.quit()
 
-        return stream_url
+        return [stream_url, subtitle_url]
 
         # If driver is still opened, close all tabs correctly, this prevents redundant disk space allocation not being cleared
     except Exception as e:
