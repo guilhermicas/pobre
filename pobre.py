@@ -4,6 +4,9 @@ from pobreScrapper import *
 from ui import *
 import os
 
+# Dominio que funciona agora
+DOMAIN = "www1.pobre.tv"
+
 
 def main():
 
@@ -16,7 +19,7 @@ def main():
 
         # Searching Series
         search_query = input("Série: ")
-        search_url = f"https://www1.pobre.tv/tvshows?search={search_query}"
+        search_url = f"https://{DOMAIN}/tvshows?search={search_query}"
 
         # Obtaining search results
         series_found = scrapSeries(search_url)
@@ -47,8 +50,9 @@ def main():
             }
         )
 
+        season_chosen_url = f"{series_url}/season/{season_chosen}"
         # Search Season's available episodes (ex: https://pobre.tv/tvshows/tt1475582/season/2/))
-        episodes_found = scrapEpisodes(f"{series_url}/season/{season_chosen}")
+        episodes_found = scrapEpisodes(season_chosen_url)
 
         # Choose Episode to watch
         episode_chosen = chooseMenu(
@@ -62,21 +66,26 @@ def main():
 
         episode_id = episode_chosen[0]
 
-        print("Getting stream url and subtitle url... (permitir até 1 minuto)")
+        # Obtaining stream and subtitle URLs
         stream_url, subtitle_url = get_episode_stream_url(
             f"{season_chosen_url}/episode/{episode_id}")  # Link to extract the stream URL
 
-        # TODO:Migrate this to get_episode_stream_url and raise custom exception maybe
         if not stream_url:
             print("Não foi possivel buscar o URL da stream.")
             exit(1)
 
-        # TODO: Download subtitle to tmp file and delete after vlc dies
-
         print(f"Stream url: {stream_url}")
-        # Play VLC stream, os.system stops program execution until VLC closes.
-        execute_OS_command(
-            "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url])
+        if subtitle_url:
+            print(f"Subtitle url: {subtitle_url}")
+            # TODO: Download subtitle to tmp file and delete after vlc dies
+            execute_OS_command(
+                "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url])
+        else:
+            print(
+                "Não foi possivel extrair os subtitulos, continuando com a visualização da stream á mesma.")
+            execute_OS_command(
+                "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url])
+
         #os.system(f"vlc {stream_url}")
         #print("Pseudo menu")
         #print("[p] proximo episodio")

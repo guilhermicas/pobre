@@ -259,6 +259,7 @@ def getSubtitles(driver):
         subtitle_url = waitFindElement(
             driver, "//script[@type]").get_attribute("innerHTML")
 
+        print(subtitle_url)
         # Extracting line with subs
         subtitle_url = subtitle_url.split("\n")[2]
 
@@ -277,6 +278,8 @@ def get_episode_stream_url(episode_url):
     """
         Gets stream url and subtitle url if available
     """
+    # TODO: Implement using Chrome also
+
     firefox_options = webdriver.FirefoxOptions()
     # Dont visually open browser window
     firefox_options.add_argument("--headless")
@@ -309,6 +312,7 @@ def get_episode_stream_url(episode_url):
             options=firefox_options, firefox_profile=firefox_profile)
 
     try:
+        print("Getting stream url and subtitle url... (permitir até 1 minuto)")
         driver.get(episode_url)
 
         # Only continue if request was successfull
@@ -340,11 +344,11 @@ def get_episode_stream_url(episode_url):
         print("Extracting stream url...")
         stream_url = getLoadedVideoStreamUrl(driver, "//video")
 
+        # If driver is still opened, close all tabs correctly, this prevents redundant disk space allocation not being cleared
         driver.quit()
 
         return [stream_url, subtitle_url]
 
-        # If driver is still opened, close all tabs correctly, this prevents redundant disk space allocation not being cleared
     except Exception as e:
         print("Something bad happened")
         print(str(e))
