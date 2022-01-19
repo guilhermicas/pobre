@@ -6,30 +6,45 @@ Code used for user interface
 """
 
 
-def chooseMenu(options: list, indexed: bool = True):
+def chooseMenu(options: list, indexed: bool = True, hideIndex: list = [], horizontal: bool = False, headers: dict = {}):
     """
         @brief <- Prints options, and has menu to choose which one
 
         @params:
             @options <- Series found from previous search
             @indexed <- If true, when options are printed show the index on the left
+            @hideIndex <- list containing indexes to not be printed
+                          Ex: If i didnt want the link to be shown in the list, i would pass hideIndex = [1] where 1 is the index that i dont want printed
+                          options=["sherlock","http://link.com"]
+            @horizontal <- Prints items in horizontal order instead of vertival
 
         @returns <- Chosen Series array
     """
+
     # Choosing options menu
     while(True):
+        execute_OS_command("clear", "cls")
+        # Showing headers if any exist
+        for headerTitle, headerValue in headers.items():
+            print(f"{headerTitle}: {headerValue} ")
         # Showing search results if any found
         for idx, item in enumerate(options):
 
             if indexed:
                 print(f"[{str(idx+1)}] ", end="")
 
-            for value in item:
-                # Dont show links to user
-                if "http" not in value:
+            for itemIndex, value in enumerate(item):
+                # Show every option except ones whose index is inside hideIndex
+                if itemIndex not in hideIndex:
                     print(value, end=" ")
+                # Dont show links to user
+                # if "http" not in value:
+                    #print(value, end=" ")
 
-            print("\n", end="")
+            print("\n" if not horizontal else "\t", end="")
+
+        if horizontal:
+            print("\n")
 
         # Return chosen option from options list, with correct user input validation
         return options[getOptionNumber(options)]

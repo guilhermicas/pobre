@@ -13,12 +13,10 @@ def main():
     while(True):
 
         execute_OS_command("clear", "cls")
-        # TODO: Reactivate user input and correct search_url formatting
-        # Getting search input
-        search_query = input("Série: ")
 
-        search_url = f"https://pobre.tv/tvshows?search={search_query}"
-        #search_url = "https://pobre.tv/tvshows?search=sherlock"
+        # Searching Series
+        search_query = input("Série: ")
+        search_url = f"https://www1.pobre.tv/tvshows?search={search_query}"
 
         # Obtaining search results
         series_found = scrapSeries(search_url)
@@ -27,42 +25,46 @@ def main():
             input("Nenhum resultado encontrado, prima Enter para continuar...")
             continue
 
-        print("Séries encontradas:")
-        # Choosing a series menu
-        series_chosen = chooseMenu(series_found)
+        # Choosing a series, index 3 is series URL no need to show
+        series_chosen = chooseMenu(
+            series_found, hideIndex=[3],
+            headers={
+                "Séries encontradas": ""
+            }
+        )
 
-        # URL from the chosen series
-        series_url = series_chosen[3]
+        series_url = series_chosen[3]  # URL from the chosen series
 
         # Search Seasons (use series name and metadata just for UX on the top of the search, visual purposes only, use link to do the webscraping)
         seasons_found = scrapSeasons(series_chosen)
 
-        execute_OS_command("clear", "cls")
-        print(f"Série: {series_chosen[0]}")
-        print("Temporadas encontradas:")
         # Choosing season from the chosen series
-        season_chosen = chooseMenu(seasons_found, indexed=False)
+        season_chosen = chooseMenu(
+            seasons_found, indexed=False, horizontal=True,
+            headers={
+                "Série": series_chosen[0],
+                "Temporadas encontradas": ""
+            }
+        )
 
-        # Season URL to scrape episodes (ex: https://pobre.tv/tvshows/tt1475582/season/2/)
-        season_chosen_url = f"{series_url}/season/{season_chosen}"
+        # Search Season's available episodes (ex: https://pobre.tv/tvshows/tt1475582/season/2/))
+        episodes_found = scrapEpisodes(f"{series_url}/season/{season_chosen}")
 
-        # Search Season's available episodes
-        episodes_found = scrapEpisodes(season_chosen_url)
-
-        execute_OS_command("clear", "cls")
-        print(f"Série: {series_chosen[0]} Temporada {season_chosen}")
-        print("Episódios encontrados:")
         # Choose Episode to watch
-        episode_chosen = chooseMenu(episodes_found)
-        # TODO: when choosing on menu, dont show Episode's ID
-        # print(episode_chosen)
+        episode_chosen = chooseMenu(
+            episodes_found, hideIndex=[0],
+            headers={
+                "Série": series_chosen[0],
+                "Temporada": season_chosen,
+                "Episódios encontrados": ""
+            }
+        )
+
         episode_id = episode_chosen[0]
 
-        # Link to extract the stream URL
-        stream_extract_url = f"{season_chosen_url}/episode/{episode_id}"
-
         print("Getting stream url and subtitle url... (permitir até 1 minuto)")
-        stream_url, subtitle_url = get_episode_stream_url(stream_extract_url)
+        stream_url, subtitle_url = get_episode_stream_url(
+            f"{season_chosen_url}/episode/{episode_id}")  # Link to extract the stream URL
 
         # TODO:Migrate this to get_episode_stream_url and raise custom exception maybe
         if not stream_url:
