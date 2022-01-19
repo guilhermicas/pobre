@@ -282,7 +282,7 @@ def get_episode_stream_url(episode_url):
 
     firefox_options = webdriver.FirefoxOptions()
     # Dont visually open browser window
-    # firefox_options.add_argument("--headless")
+    firefox_options.add_argument("--headless")
 
     firefox_profile = webdriver.FirefoxProfile()
 
