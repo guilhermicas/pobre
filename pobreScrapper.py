@@ -5,9 +5,9 @@ from time import sleep
 import requests
 
 from sys import platform
-import pathlib
 from pathlib import Path
 
+import re
 
 """
 [start] Menu selection scrapping (no selenium)
@@ -255,19 +255,19 @@ def getLoadedVideoStreamUrl(driver, video_xpath):
 def getSubtitles(driver):
     print("Extracting subtitles...")
     try:
-        # Find script tag that contains window.subtitle
-        subtitle_url = waitFindElement(
-            driver, "//script[@type]").get_attribute("innerHTML")
+        for i in range(5):
+            sleep(0.4)
 
-        print(subtitle_url)
-        # Extracting line with subs
-        subtitle_url = subtitle_url.split("\n")[2]
+            srt_file = re.search("[\"\'].*\.srt[\"\']",
+                                 driver.page_source)
 
-        # Getting link from between quotation marks
-        subtitle_url = subtitle_url[subtitle_url.find(
-            "'")+1:subtitle_url.rfind("'")]
+            if srt_file:
+                print("Subtitles found: ")
+                return srt_file.group(0)  # group(0) extracts matched string
 
-        return subtitle_url
+        # TODO: find subtitles through tracker tag if the above doesnt work
+        return None
+
     except Exception as e:
         print("No subtitles found...")
         print("Exception message: " + str(e))
@@ -282,7 +282,7 @@ def get_episode_stream_url(episode_url):
 
     firefox_options = webdriver.FirefoxOptions()
     # Dont visually open browser window
-    firefox_options.add_argument("--headless")
+    # firefox_options.add_argument("--headless")
 
     firefox_profile = webdriver.FirefoxProfile()
 
@@ -305,7 +305,7 @@ def get_episode_stream_url(episode_url):
     if platform == "win32":
         # If on windows
         driver = webdriver.Firefox(
-            options=firefox_options, firefox_profile=firefox_profile, executable_path=str(Path(pathlib.Path(__file__).parent.resolve()))+r"\gecko_driver\geckodriver.exe")
+            options=firefox_options, firefox_profile=firefox_profile, executable_path=str(Path(Path(__file__).parent.resolve()))+r"\gecko_driver\geckodriver.exe")
     else:
         # If on linux
         driver = webdriver.Firefox(

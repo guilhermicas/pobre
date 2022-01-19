@@ -3,6 +3,7 @@
 from pobreScrapper import *
 from ui import *
 import os
+import requests
 
 # Dominio que funciona agora
 DOMAIN = "www1.pobre.tv"
@@ -78,8 +79,17 @@ def main():
         if subtitle_url:
             print(f"Subtitle url: {subtitle_url}")
             # TODO: Download subtitle to tmp file and delete after vlc dies
+
+            r = requests.get(subtitle_url[1:-1], allow_redirects=True)
+
+            with open('stream_subtitles.srt', 'wb') as f:
+                f.write(r.content)
+
             execute_OS_command(
-                "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url])
+                "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url, "--sub-file", "./stream_subtitles.srt"])
+
+            # Deleting subtitles after using them
+            execute_OS_command("rm -rf *.srt", "del /S *.srt")
         else:
             print(
                 "Não foi possivel extrair os subtitulos, continuando com a visualização da stream á mesma.")
