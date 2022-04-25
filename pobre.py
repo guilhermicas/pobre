@@ -1,4 +1,3 @@
-#!/bin/python3
 
 from pobreScrapper import *
 from ui import *
@@ -67,9 +66,12 @@ def main():
 
         episode_id = episode_chosen[0]
 
+        print(f"{season_chosen_url}/episode/{episode_id}")
+
         # Obtaining stream and subtitle URLs
         stream_url, subtitle_url = get_episode_stream_url(
             f"{season_chosen_url}/episode/{episode_id}")  # Link to extract the stream URL
+
 
         if not stream_url:
             print("Não foi possivel buscar o URL da stream.")
@@ -86,9 +88,9 @@ def main():
                 f.write(r.content)
 
             execute_OS_command(
-                "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url, "--sub-file", "./stream_subtitles.srt"])
+                "vlc", r'"C:\Program\ Files\VideoLAN\VLC\vlc.exe"', [stream_url, "--sub-file", "./stream_subtitles.srt", "--http-reconnect"])
 
-            # Deleting subtitles after using them
+            # Deleting subtitles after using them TODO: only delete when vlc process dies, this way if stream drops, and reconnects, it will still have the subtitles file
             execute_OS_command("rm -rf *.srt", "del /S *.srt")
         else:
             print(

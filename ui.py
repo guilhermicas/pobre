@@ -21,6 +21,8 @@ def chooseMenu(options: list, indexed: bool = True, hideIndex: list = [], horizo
         @returns <- Chosen Series array
     """
 
+    if len(options) == 1:
+        return options[0]
     # Choosing options menu
     while(True):
         execute_OS_command("clear", "cls")
