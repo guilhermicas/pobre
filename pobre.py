@@ -1,3 +1,4 @@
+#!/bin/python
 
 from pobreScrapper import *
 from ui import *
@@ -19,6 +20,11 @@ def main():
 
         # Searching Series
         search_query = input("Série: ")
+
+        if not search_query.strip():
+            input("Necessita colocar uma pesquisa. Prima Enter para continuar...")
+            continue
+
         search_url = f"https://{DOMAIN}/tvshows?search={search_query}"
 
         # Obtaining search results
@@ -36,21 +42,21 @@ def main():
             }
         )
 
-        series_url = series_chosen[3]  # URL from the chosen series
+        chosen_url = series_chosen[3]  # URL from the chosen series
 
-        # Search Seasons (use series name and metadata just for UX on the top of the search, visual purposes only, use link to do the webscraping)
-        seasons_found = scrapSeasons(series_chosen)
+        seasons_found = scrapSeasons(chosen_url)
 
         # Choosing season from the chosen series
         season_chosen = chooseMenu(
             seasons_found, indexed=False, horizontal=True,
             headers={
+                # (use series name and metadata just for UX on the top of the search, visual purposes only, use link to do the webscraping)
                 "Série": series_chosen[0],
                 "Temporadas encontradas": ""
             }
         )
 
-        season_chosen_url = f"{series_url}/season/{season_chosen}"
+        season_chosen_url = f"{chosen_url}/season/{season_chosen}"
         # Search Season's available episodes (ex: https://pobre.tv/tvshows/tt1475582/season/2/))
         episodes_found = scrapEpisodes(season_chosen_url)
 
@@ -112,3 +118,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

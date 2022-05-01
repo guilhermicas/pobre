@@ -60,15 +60,12 @@ def scrapSeries(query: str):
     return results
 
 
-def scrapSeasons(series_chosen: str):
+def scrapSeasons(series_url: str):
     """
         Scraps available series from chosen series
 
         @returns available season's numbers and corresponding links (ex: [["1","https://season_link"], ["2","https://season_link"], ["3","https://season_link"], ["4","https://season_link"]])
     """
-
-    # print(series_chosen)
-    series_url = series_chosen[3]
 
     # Obtaining from html the available seasons
     html_doc = safeGETrequest(series_url)
@@ -273,47 +270,90 @@ def getSubtitles(driver):
         print("Exception message: " + str(e))
         return None
 
+def obtainBrowserDriver():
+    """
+    @brief  Tenta usar o chrome ou o firefox como browser driver e devolve o que tiver sucesso
+    @returns driver
+    TODO: maybe store a cache of the browser that has previously worked instead of always looping through the array and failing possibly
+    """
+    implemented_browsers = ["firefox","chrome"]
+    for implemented_browser in implemented_browsers:
+        print("attempting to use " + implemented_browser)
+        if(implemented_browser == "chrome"):
+            # TODO:Retirar o headless e ver se o css/GET da pagina esta mesmo otimizado e se ha coisas que se podem desativar que estao a ocupar muita velocidade de processamento/net
+            chrome_options = webdriver.ChromeOptions()
+
+            # This should optimize speed
+            prefs = {'profile.default_content_setting_values': {'images': 2, 
+                                'plugins': 2, 'geolocation': 2,
+                                'notifications': 2, 'auto_select_certificate': 2, 'fullscreen': 2,
+                                'mouselock': 2, 
+                                'media_stream_mic': 2, 'media_stream_camera': 2, 'protocol_handlers': 2,
+                                'ppapi_broker': 2, 'automatic_downloads': 2, 'midi_sysex': 2,
+                                'push_messaging': 2,  'metro_switch_to_desktop': 2,
+                                'app_banner': 2, 'site_engagement': 2,
+                                }}
+            chrome_options.add_experimental_option('prefs', prefs)
+            chrome_options.add_argument("disable-infobars")
+            chrome_options.add_argument("--disable-extensions")
+            chrome_options.add_argument("window-size=100,100")
+
+
+            # Dont visually open browser window
+            #chrome_options.add_argument("--headless")
+
+            # Creating and returning the browser driver
+            if platform == "win32":
+                # If on windows TODO: em todos os sistemas operativos, detetar se o user fez download do driver, se nao, automaticamente buscar o driver da net e por na pasta. assim fica com o atualizado no momento que faz o push, em vez de ter um driver antigo ja commited no projeto
+                return webdriver.Chrome(chrome_options=chrome_options, executable_path=str(Path(Path(__file__).parent.resolve()))+r'\BrowserDrivers\chromedriver.exe')
+                
+            else:
+                # If on linux and should work on mac
+                return webdriver.Chrome(chrome_options=chrome_options)
+        elif(implemented_browser == "firefox"):
+
+            #TODO: in all browsers, if captcha is detected, open the browser for user completion or have solution to the captcha problem
+            firefox_options = webdriver.FirefoxOptions()
+            # Dont visually open browser window
+            firefox_options.add_argument("--headless")
+
+            firefox_profile = webdriver.FirefoxProfile()
+
+            # Disable image loading
+            firefox_profile.set_preference("permissions.default.image", 2)
+
+            # Options that should help
+            firefox_profile.set_preference(
+                "browser.helperApps.deleteTempFileOnExit", True)
+            firefox_profile.set_preference("reader.parse-on-load.enabled", False)
+            firefox_profile.set_preference(
+                "browser.display.show_image_placeholders", False)
+            firefox_profile.set_preference(
+                "browser.display.use_document_colors", False)
+            firefox_profile.set_preference("browser.display.use_document_fonts", 0)
+
+            # TODO: Disable CSS
+
+            # Driver is basically browser controller
+            if platform == "win32":
+                # If on windows
+                return webdriver.Firefox( options=firefox_options, firefox_profile=firefox_profile, executable_path=str(Path(Path(__file__).parent.resolve()))+r"\BrowserDrivers\geckodriver.exe")
+            else:
+                # If on linux
+                return webdriver.Firefox( options=firefox_options, firefox_profile=firefox_profile, log_path='/dev/null')
 
 def get_episode_stream_url(episode_url):
     """
         Gets stream url and subtitle url if available
     """
-    # TODO: Implement using Chrome also
 
-    firefox_options = webdriver.FirefoxOptions()
-    # Dont visually open browser window
-    firefox_options.add_argument("--headless")
-
-    firefox_profile = webdriver.FirefoxProfile()
-
-    # Disable image loading
-    firefox_profile.set_preference("permissions.default.image", 2)
-
-    # Options that should help
-    firefox_profile.set_preference(
-        "browser.helperApps.deleteTempFileOnExit", True)
-    firefox_profile.set_preference("reader.parse-on-load.enabled", False)
-    firefox_profile.set_preference(
-        "browser.display.show_image_placeholders", False)
-    firefox_profile.set_preference(
-        "browser.display.use_document_colors", False)
-    firefox_profile.set_preference("browser.display.use_document_fonts", 0)
-
-    # TODO: Disable CSS
-
-    # Driver is basically browser controller
-    if platform == "win32":
-        # If on windows
-        driver = webdriver.Firefox(
-            options=firefox_options, firefox_profile=firefox_profile, executable_path=str(Path(Path(__file__).parent.resolve()))+r"\gecko_driver\geckodriver.exe")
-    else:
-        # If on linux
-        driver = webdriver.Firefox(
-            options=firefox_options, firefox_profile=firefox_profile)
+    # Automaticamente tenta usar o chrome, se falhar tenta com firefox
+    driver = obtainBrowserDriver()
 
     try:
         print("Getting stream url and subtitle url... (permitir até 1 minuto)")
         driver.get(episode_url)
+        driver.minimize_window()
 
         # Only continue if request was successfull
         for request in driver.requests:
@@ -322,7 +362,7 @@ def get_episode_stream_url(episode_url):
                 if request.url == episode_url:
                     if status_code < 200 or status_code >= 300:
                         print(
-                            "O site provavelmente não está ativo. Tente novamente mais tarde ou contacte desenvolvedor.")
+                            "O site provavelmente não está ativo. Tente novamente mais tarde ou contacte desenvolvedor. Status code = "+status_code)
                         return False
                     else:
                         break
